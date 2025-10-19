@@ -1,106 +1,66 @@
 from get_data import get_data
+from denoise import denoise
+from rpt import rpt
 import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime
-from scipy.signal import butter, filtfilt, find_peaks
 
-def denoise(ekg: np.array, fs: int, lowcut: int, highcut: int, plot_freq: bool = False) -> np.array:
-    fft_values = np.fft.fft(ekg)
-    fft_freq = np.fft.fftfreq(len(ekg), d=1/fs)
+######## Filter bandwith ########
+# arm_in_move
+# low: 10 high: 48
+# arm_no_move
+# low:    high:
+# chest_in_move
+# low:    high:
+# chest_no_move
+# low:    high:
+################################
 
-    pos_mask = fft_freq >= 0
-    fft_freq = fft_freq[pos_mask]
-    fft_values = np.abs(fft_values[pos_mask])
+ekg_data = get_data("arm_in_move")[:, [2, 6]] 
 
-    if plot_freq:
-        plt.figure(figsize=(10, 5))
-        plt.plot(fft_freq, fft_values)
-        plt.xlabel('Frequency [Hz]')
-        plt.ylabel('Amplitude')
-        plt.title('EKG FFT')
-        plt.xlim(0, 50)
-        plt.ylim(0, 200000)
-        plt.show()
-
-    # lowcut = 10.0
-    # highcut = 48.0
-    b, a = butter(N=4, Wn=[lowcut, highcut], btype='band', fs=fs)
-    filtered_ekg = filtfilt(b, a, ekg)
-
-    return filtered_ekg
-
-
-arr = get_data("arm_in_move")[:, [2, 6]] #Date and value
-
-ekg = arr[:, 1].astype(float)
-timestamps = arr[:, 0]
-
+ekg = ekg_data[:, 1].astype(float)
+timestamps = ekg_data[:, 0]
 time_sec = np.array([ts.timestamp() for ts in [datetime.strptime(t, '%Y-%m-%d %H:%M:%S.%f') for t in timestamps]])
-time_sec -= time_sec[0]
+time_sec -= time_sec[0] # Convert datetime to seconds
 
 fs = 200 #Sampling per 0.005
 
 filtered_ekg = denoise(ekg, fs, 10, 48, False)
 
+r, p, t = rpt(filtered_ekg, fs)
 
-min_distance = int(200 * 60 / 180)
-
-r_peaks, _ = find_peaks(filtered_ekg, distance=min_distance, height=np.mean(filtered_ekg)+0.5*np.std(filtered_ekg))
-
-print(f"Detected {len(r_peaks)} R-peaks")
-
-p_peaks = []
-t_peaks = []
-
-for r in r_peaks:
-    start_p = max(0, r - int(0.2 * fs))
-    end_p = r - int(0.05 * fs)
-    p_window = filtered_ekg[start_p:end_p]
-    if len(p_window) > 0:
-        p = np.argmax(p_window) + start_p
-        p_peaks.append(p)
-
-    start_t = r + int(0.05 * fs)
-    end_t = min(len(filtered_ekg), r + int(0.4 * fs))
-    t_window = filtered_ekg[start_t:end_t]
-    if len(t_window) > 0:
-        t = np.argmax(t_window) + start_t
-        t_peaks.append(t)
-
-rr_intervals = np.diff(time_sec[r_peaks])
+rr_intervals = np.diff(time_sec[r])
 hr_avg = 60 / np.mean(rr_intervals)
 
 print(f"Average Heart Rate: {hr_avg:.1f} bpm")
 
-hr_instant = 60 / rr_intervals  # bpm per RR interval
-
-
+# Wykres filtracji sygnalu
 plt.figure(figsize=(12, 5))
-plt.plot(time_sec, ekg, label='Original', alpha=0.5)
-plt.plot(time_sec, filtered_ekg, label='Filtered', linewidth=2)
-plt.xlabel('Time [s]')
-plt.ylabel('EKG Value')
-plt.title('Original vs Filtered EKG Signal')
+plt.plot(time_sec, ekg, label='Sygnał oryginalny', alpha=0.5)
+plt.plot(time_sec, filtered_ekg, label='Sygnał po filtracji', linewidth=2)
+plt.xlabel('Czas [s]')
+plt.ylabel('Sygnał')
+plt.title('Sygnał przed i po filtracji zakłóceń')
 plt.legend()
 plt.tight_layout()
 plt.show()
 
-t_end = 2  # seconds
-window_mask = time_sec <= t_end
+
+#Fragment wykresu szczytow R i zalamkow P i T
+t_end = 2  # [s]
+
+r_range = [r for r in r if time_sec[r] <= t_end]
+p_range = [p for p in p if time_sec[p] <= t_end]
+t_range = [t for t in t if time_sec[t] <= t_end]
 
 plt.figure(figsize=(12, 5))
-plt.plot(time_sec[window_mask], filtered_ekg[window_mask], label='Filtered EKG')
-
-r_peaks_window = [r for r in r_peaks if time_sec[r] <= t_end]
-p_peaks_window = [p for p in p_peaks if time_sec[p] <= t_end]
-t_peaks_window = [t for t in t_peaks if time_sec[t] <= t_end]
-
-plt.plot(time_sec[r_peaks_window], filtered_ekg[r_peaks_window], 'ro', label='R-peaks')
-plt.plot(time_sec[p_peaks_window], filtered_ekg[p_peaks_window], 'go', label='P-waves')
-plt.plot(time_sec[t_peaks_window], filtered_ekg[t_peaks_window], 'mo', label='T-waves')
-
-plt.xlabel('Time [s]')
-plt.ylabel('EKG Value')
-plt.title('Detected R, P, and T Peaks (first 5 seconds)')
+plt.plot(time_sec[time_sec <= t_end], filtered_ekg[time_sec <= t_end], label='EKG')
+plt.plot(time_sec[r_range], filtered_ekg[r_range], 'ro', label='Szczyt R')
+plt.plot(time_sec[p_range], filtered_ekg[p_range], 'go', label='Załamek P')
+plt.plot(time_sec[t_range], filtered_ekg[t_range], 'bo', label='Załamek T')
+plt.xlabel('Czas [s]')
+plt.ylabel('EKG')
+plt.title('Szczyty R i załamki P i T (2 sekundy sygnału)')
 plt.legend()
+plt.tight_layout()
 plt.show()
