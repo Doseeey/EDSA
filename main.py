@@ -9,11 +9,11 @@ from datetime import datetime
 # arm_in_move
 # low: 10 high: 48
 # arm_no_move
-# low:    high:
+# low: 10 high: 48
 # chest_in_move
-# low:    high:
+# low: 10 high: 48
 # chest_no_move
-# low:    high:
+# low: 10 high: 48
 ################################
 
 ekg_data = get_data("arm_in_move")[:, [2, 6]] 
@@ -21,18 +21,21 @@ ekg_data = get_data("arm_in_move")[:, [2, 6]]
 ekg = ekg_data[:, 1].astype(float)
 timestamps = ekg_data[:, 0]
 time_sec = np.array([ts.timestamp() for ts in [datetime.strptime(t, '%Y-%m-%d %H:%M:%S.%f') for t in timestamps]])
-time_sec -= time_sec[0] # Convert datetime to seconds
+time_sec -= time_sec[0] # Zmiana daty z kolumny trzeciej na sekundy
 
 fs = 200 #Sampling per 0.005
 
+# Usuniecie zaklocen
 filtered_ekg = denoise(ekg, fs, 10, 48, False)
 
+# Szczyty R, Zalamania P i T
 r, p, t = rpt(filtered_ekg, fs)
 
+# Tetno
 rr_intervals = np.diff(time_sec[r])
 hr_avg = 60 / np.mean(rr_intervals)
 
-print(f"Average Heart Rate: {hr_avg:.1f} bpm")
+print(f"Tetno: {hr_avg:.1f} bpm")
 
 # Wykres filtracji sygnalu
 plt.figure(figsize=(12, 5))
