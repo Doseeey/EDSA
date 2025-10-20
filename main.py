@@ -26,7 +26,7 @@ time_sec -= time_sec[0] # Zmiana daty z kolumny trzeciej na sekundy
 fs = 200 #Sampling per 0.005
 
 # Usuniecie zaklocen
-filtered_ekg = denoise(ekg, fs, 10, 48, False)
+filtered_ekg = denoise(ekg, time_sec, fs, 5, 15, True, True)
 
 # Szczyty R, Zalamania P i T
 r, p, t = rpt(filtered_ekg, fs)
@@ -37,20 +37,9 @@ hr_avg = 60 / np.mean(rr_intervals)
 
 print(f"Tetno: {hr_avg:.1f} bpm")
 
-# Wykres filtracji sygnalu
-plt.figure(figsize=(12, 5))
-plt.plot(time_sec, ekg, label='Sygnał oryginalny', alpha=0.5)
-plt.plot(time_sec, filtered_ekg, label='Sygnał po filtracji', linewidth=2)
-plt.xlabel('Czas [s]')
-plt.ylabel('Sygnał')
-plt.title('Sygnał przed i po filtracji zakłóceń')
-plt.legend()
-plt.tight_layout()
-plt.show()
-
 
 #Fragment wykresu szczytow R i zalamkow P i T
-t_end = 2  # [s]
+t_end = 5  # [s]
 
 r_range = [r for r in r if time_sec[r] <= t_end]
 p_range = [p for p in p if time_sec[p] <= t_end]
