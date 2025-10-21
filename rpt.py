@@ -3,9 +3,9 @@ from scipy.signal import find_peaks
 
 def rpt(filtered_ekg: np.array, fs: int):
     min_distance = int(fs * 60 / 180) # najmniejszy dystans miedzy uderzeniami serca
-    min_height = np.mean(filtered_ekg)+0.5*np.std(filtered_ekg) # szczyt kiedy odchylony jest o 0.5 odchylenia standardowego powyzej sredniej
+    min_height = np.mean(filtered_ekg)+0.6*np.std(filtered_ekg) # szczyt kiedy odchylony jest o 0.5 odchylenia standardowego powyzej sredniej
 
-    r_index, _ = find_peaks(filtered_ekg, distance=min_distance, height=min_height)
+    r_index, _ = find_peaks(filtered_ekg, distance=min_distance, height=min_height, prominence=0.15)
 
     # print(r_index) # indeksy szczytow R
 
@@ -23,7 +23,7 @@ def rpt(filtered_ekg: np.array, fs: int):
             p_index.append(p)
 
         # Załamek R - 0.08 [s] po szczycie, trwa 0.13-0.16 [s]
-        start_t = r + int(0.08 * fs)
+        start_t = r + int(0.05 * fs)
         end_t = min(len(filtered_ekg), r + int(0.24 * fs))
         t_window = filtered_ekg[start_t:end_t]
         if len(t_window) > 0:

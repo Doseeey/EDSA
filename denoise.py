@@ -16,7 +16,7 @@ def denoise(ekg: np.array, time_sec: np.array, fs: int, lowcut: int, highcut: in
         plt.xlabel('Częstotliwość [Hz]')
         plt.ylabel('Amplituda')
         plt.title('EKG FFT')
-        plt.xlim(0, 50)
+        # plt.xlim(0, 50)
         plt.ylim(0, 200000)
         plt.show()
 

@@ -5,17 +5,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime
 
-######## Filter bandwith ########
-# arm_in_move
-# low: 10 high: 48
-# arm_no_move
-# low: 10 high: 48
-# chest_in_move
-# low: 10 high: 48
-# chest_no_move
-# low: 10 high: 48
-################################
-
 ekg_data = get_data("arm_in_move")[:, [2, 6]] 
 
 ekg = ekg_data[:, 1].astype(float)
