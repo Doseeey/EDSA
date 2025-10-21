@@ -5,7 +5,10 @@ def rpt(filtered_ekg: np.array, fs: int):
     min_distance = int(fs * 60 / 180) # najmniejszy dystans miedzy uderzeniami serca
     min_height = np.mean(filtered_ekg)+0.7*np.std(filtered_ekg) # szczyt kiedy odchylony jest o 0.5 odchylenia standardowego powyzej sredniej
 
-    r_index, _ = find_peaks(filtered_ekg, distance=min_distance, height=min_height, prominence=0.15)
+    #arm_no_move 0.7
+    #arm_in_move 0.3
+
+    r_index, _ = find_peaks(filtered_ekg, distance=min_distance, height=min_height, prominence=0.3)
 
     # print(r_index) # indeksy szczytow R
 

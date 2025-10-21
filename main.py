@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime
 
-table_name = "arm_no_move"
+table_name = "arm_in_move"
 ekg_data = get_data(table_name)[:, [2, 6]] 
 
 ekg = ekg_data[:, 1].astype(float)
