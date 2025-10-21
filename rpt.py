@@ -3,7 +3,7 @@ from scipy.signal import find_peaks
 
 def rpt(filtered_ekg: np.array, fs: int):
     min_distance = int(fs * 60 / 180) # najmniejszy dystans miedzy uderzeniami serca
-    min_height = np.mean(filtered_ekg)+0.6*np.std(filtered_ekg) # szczyt kiedy odchylony jest o 0.5 odchylenia standardowego powyzej sredniej
+    min_height = np.mean(filtered_ekg)+0.7*np.std(filtered_ekg) # szczyt kiedy odchylony jest o 0.5 odchylenia standardowego powyzej sredniej
 
     r_index, _ = find_peaks(filtered_ekg, distance=min_distance, height=min_height, prominence=0.15)
 
